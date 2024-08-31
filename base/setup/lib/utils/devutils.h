@@ -10,11 +10,23 @@
 /* FUNCTIONS *****************************************************************/
 
 NTSTATUS
+pOpenDeviceEx_UStr(
+    _In_ PCUNICODE_STRING DevicePath,
+    _Out_ PHANDLE DeviceHandle,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_ ULONG ShareAccess);
+
+NTSTATUS
 pOpenDeviceEx(
     _In_ PCWSTR DevicePath,
     _Out_ PHANDLE DeviceHandle,
     _In_ ACCESS_MASK DesiredAccess,
     _In_ ULONG ShareAccess);
+
+NTSTATUS
+pOpenDevice_UStr(
+    _In_ PCUNICODE_STRING DevicePath,
+    _Out_ PHANDLE DeviceHandle);
 
 NTSTATUS
 pOpenDevice(
