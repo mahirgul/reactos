@@ -186,47 +186,87 @@ NtSystemDebugControl(SYSDBG_COMMAND ControlCode,
                      ULONG OutputBufferLength,
                      PULONG ReturnLength)
 {
-    switch (ControlCode)
+    KPROCESSOR_MODE PreviousMode = KeGetPreviousMode();
+    ULONG Length = 0;
+    NTSTATUS Status;
+
+    _SEH2_TRY
     {
-        case SysDbgQueryModuleInformation:
-        case SysDbgQueryTraceInformation:
-        case SysDbgSetTracepoint:
-        case SysDbgSetSpecialCall:
-        case SysDbgClearSpecialCalls:
-        case SysDbgQuerySpecialCalls:
-        case SysDbgQueryVersion:
-        case SysDbgReadVirtual:
-        case SysDbgWriteVirtual:
-        case SysDbgReadPhysical:
-        case SysDbgWritePhysical:
-        case SysDbgReadControlSpace:
-        case SysDbgWriteControlSpace:
-        case SysDbgReadIoSpace:
-        case SysDbgWriteIoSpace:
-        case SysDbgReadMsr:
-        case SysDbgWriteMsr:
-        case SysDbgReadBusData:
-        case SysDbgWriteBusData:
-        case SysDbgCheckLowMemory:
-        case SysDbgGetTriageDump:
-            return STATUS_NOT_IMPLEMENTED;
-        case SysDbgBreakPoint:
-        case SysDbgEnableKernelDebugger:
-        case SysDbgDisableKernelDebugger:
-        case SysDbgGetAutoKdEnable:
-        case SysDbgSetAutoKdEnable:
-        case SysDbgGetPrintBufferSize:
-        case SysDbgSetPrintBufferSize:
-        case SysDbgGetKdUmExceptionEnable:
-        case SysDbgSetKdUmExceptionEnable:
-        case SysDbgGetKdBlockEnable:
-        case SysDbgSetKdBlockEnable:
-            return KdSystemDebugControl(
-                ControlCode,
-                InputBuffer, InputBufferLength,
-                OutputBuffer, OutputBufferLength,
-                ReturnLength, KeGetPreviousMode());
-        default:
-            return STATUS_INVALID_INFO_CLASS;
+        if (PreviousMode != KernelMode)
+        {
+            if (InputBufferLength)
+                ProbeForRead(InputBuffer, InputBufferLength, sizeof(ULONG));
+            if (OutputBufferLength)
+                ProbeForWrite(OutputBuffer, OutputBufferLength, sizeof(ULONG));
+            if (ReturnLength)
+                ProbeForWriteUlong(ReturnLength);
+        }
+
+        switch (ControlCode)
+        {
+            case SysDbgQueryVersion:
+            case SysDbgReadVirtual:
+            case SysDbgWriteVirtual:
+            case SysDbgReadPhysical:
+            case SysDbgWritePhysical:
+            case SysDbgReadControlSpace:
+            case SysDbgWriteControlSpace:
+            case SysDbgReadIoSpace:
+            case SysDbgWriteIoSpace:
+            case SysDbgReadMsr:
+            case SysDbgWriteMsr:
+            case SysDbgReadBusData:
+            case SysDbgWriteBusData:
+            case SysDbgCheckLowMemory:
+                /* Those are implemented in KdSystemDebugControl */
+                Status = STATUS_NOT_IMPLEMENTED;
+                break;
+
+            case SysDbgQueryModuleInformation:
+                /* Removed in WinNT4 */
+                Status = STATUS_INVALID_INFO_CLASS;
+                break;
+
+#ifdef _M_IX86
+            case SysDbgQueryTraceInformation:
+            case SysDbgSetTracepoint:
+            case SysDbgSetSpecialCall:
+            case SysDbgClearSpecialCalls:
+            case SysDbgQuerySpecialCalls:
+            case SysDbgBreakPoint:
+                UNIMPLEMENTED;
+                Status = STATUS_NOT_IMPLEMENTED;
+                break;
+#endif
+
+            case SysDbgEnableKernelDebugger:
+            case SysDbgDisableKernelDebugger:
+            case SysDbgGetAutoKdEnable:
+            case SysDbgSetAutoKdEnable:
+            case SysDbgGetPrintBufferSize:
+            case SysDbgSetPrintBufferSize:
+            case SysDbgGetKdUmExceptionEnable:
+            case SysDbgSetKdUmExceptionEnable:
+            case SysDbgGetTriageDump:
+            case SysDbgGetKdBlockEnable:
+            case SysDbgSetKdBlockEnable:
+                UNIMPLEMENTED;
+                Status = STATUS_NOT_IMPLEMENTED;
+                break;
+
+            default:
+                Status = STATUS_INVALID_INFO_CLASS;
+                break;
+        }
+
+        if (ReturnLength)
+            *ReturnLength = Length;
+
+        _SEH2_YIELD(return Status);
     }
+    _SEH2_EXCEPT(EXCEPTION_EXECUTE_HANDLER)
+    {
+        _SEH2_YIELD(return _SEH2_GetExceptionCode());
+    }
+    _SEH2_END;
 }
