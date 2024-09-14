@@ -190,6 +190,9 @@ NtSystemDebugControl(SYSDBG_COMMAND ControlCode,
     ULONG Length = 0;
     NTSTATUS Status;
 
+    if (!SeSinglePrivilegeCheck(SeDebugPrivilege, PreviousMode))
+        return STATUS_ACCESS_DENIED;
+
     _SEH2_TRY
     {
         if (PreviousMode != KernelMode)
