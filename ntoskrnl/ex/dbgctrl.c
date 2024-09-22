@@ -236,11 +236,20 @@ NtSystemDebugControl(SYSDBG_COMMAND ControlCode,
             case SysDbgSetSpecialCall:
             case SysDbgClearSpecialCalls:
             case SysDbgQuerySpecialCalls:
-            case SysDbgBreakPoint:
                 UNIMPLEMENTED;
                 Status = STATUS_NOT_IMPLEMENTED;
                 break;
 #endif
+
+            case SysDbgBreakPoint:
+                if (KdDebuggerEnabled)
+                {
+                    DbgBreakPointWithStatus(DBG_STATUS_DEBUG_CONTROL);
+                    Status = STATUS_SUCCESS;
+                }
+                else
+                    Status = STATUS_UNSUCCESSFUL;
+                break;
 
             case SysDbgEnableKernelDebugger:
             case SysDbgDisableKernelDebugger:
