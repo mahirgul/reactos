@@ -282,6 +282,16 @@ NtSystemDebugControl(SYSDBG_COMMAND ControlCode,
                 break;
 
             case SysDbgGetPrintBufferSize:
+                if (OutputBufferLength != sizeof(ULONG))
+                    Status = STATUS_INFO_LENGTH_MISMATCH;
+                else
+                {
+                    /* Return buffer size only if KD is enabled */
+                    *(PULONG)OutputBuffer = KdPitchDebugger ? 0 : KdPrintBufferSize;
+                    Status = STATUS_SUCCESS;
+                }
+                break;
+
             case SysDbgSetPrintBufferSize:
             case SysDbgGetKdUmExceptionEnable:
             case SysDbgSetKdUmExceptionEnable:
