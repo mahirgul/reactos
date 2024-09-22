@@ -252,7 +252,13 @@ NtSystemDebugControl(SYSDBG_COMMAND ControlCode,
                 break;
 
             case SysDbgEnableKernelDebugger:
+                Status = KdEnableDebugger();
+                break;
+
             case SysDbgDisableKernelDebugger:
+                Status = KdDisableDebugger();
+                break;
+
             case SysDbgGetAutoKdEnable:
             case SysDbgSetAutoKdEnable:
             case SysDbgGetPrintBufferSize:
