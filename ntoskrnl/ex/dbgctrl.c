@@ -222,7 +222,17 @@ NtSystemDebugControl(SYSDBG_COMMAND ControlCode,
             case SysDbgWriteBusData:
             case SysDbgCheckLowMemory:
                 /* Those are implemented in KdSystemDebugControl */
-                Status = STATUS_NOT_IMPLEMENTED;
+                if (InitIsWinPEMode)
+                {
+                    Status = KdSystemDebugControl(ControlCode,
+                                                  InputBuffer, InputBufferLength,
+                                                  OutputBuffer, OutputBufferLength,
+                                                  &Length, PreviousMode);
+                }
+                else
+                {
+                    Status = STATUS_NOT_IMPLEMENTED;
+                }
                 break;
 
             case SysDbgQueryModuleInformation:
