@@ -577,7 +577,7 @@ PcDiskReadLogicalSectorsLBA(
     Packet->LBAStartBlock = SectorNumber;
 
     /*
-     * BIOS int 0x13, function 42h - IBM/MS INT 13 Extensions - EXTENDED READ
+     * BIOS Int 13h, function 42h - IBM/MS INT 13 Extensions - EXTENDED READ
      * Return:
      * CF clear if successful
      * AH = 00h
@@ -586,7 +586,7 @@ PcDiskReadLogicalSectorsLBA(
      * Disk address packet's block count field set to the
      * number of blocks successfully transferred.
      */
-    RegsIn.b.ah = 0x42;                 // Subfunction 42h
+    RegsIn.b.ah = 0x42;
     RegsIn.b.dl = DriveNumber;          // Drive number in DL (0 - floppy, 0x80 - harddisk)
     RegsIn.x.ds = BIOSCALLBUFSEGMENT;   // DS:SI -> disk address packet
     RegsIn.w.si = BIOSCALLBUFOFFSET;
@@ -594,6 +594,11 @@ PcDiskReadLogicalSectorsLBA(
     /* Retry 3 times */
     for (RetryCount = 0; RetryCount < 3; ++RetryCount)
     {
+        /* Restore the number of blocks to transfer, since it gets reset
+         * on failure with the number of blocks that were successfully
+         * transferred (and which could be zero). */
+        Packet->LBABlockCount = (USHORT)SectorCount;
+
         Int386(0x13, &RegsIn, &RegsOut);
 
         /* If it worked return TRUE */
